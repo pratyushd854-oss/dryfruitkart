@@ -1,0 +1,118 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id             String          @id @default(uuid())
+  name           String
+  email          String          @unique
+  password       String
+  phone          String?
+  role           String          @default("CUSTOMER") // "CUSTOMER" or "ADMIN"
+  addresses      Address[]
+  orders         Order[]
+  returnRequests ReturnRequest[]
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+}
+
+model Address {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  street    String
+  city      String
+  state     String
+  pincode   String
+  isDefault Boolean  @default(false)
+  createdAt DateTime @default(now())
+}
+
+model Product {
+  id             String      @id @default(uuid())
+  name           String
+  description    String
+  category       String      // Almonds, Cashews, Pistachios, Walnuts, Dates, Raisins, Hampers, Exotic
+  pricePerKg     Float
+  stockKg        Float       @default(20.0)
+  imageUrl       String
+  isFeatured     Boolean     @default(false)
+  rating         Float       @default(4.8)
+  numReviews     Int         @default(24)
+  origin         String      @default("Premium Harvest")
+  healthBenefits String      @default("Rich in Antioxidants, Healthy Fats & Protein")
+  orderItems     OrderItem[]
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+}
+
+model Order {
+  id              String         @id @default(uuid())
+  userId          String
+  user            User           @relation(fields: [userId], references: [id])
+  totalAmount     Float
+  discountAmount  Float          @default(0.0)
+  couponCode      String?
+  status          String         @default("PLACED") // PLACED, CONFIRMED, SHIPPED, DELIVERED, CANCELLED, RETURNED
+  shippingName    String
+  shippingPhone   String
+  shippingAddress String
+  shippingCity    String
+  shippingPincode String
+  items           OrderItem[]
+  payment         Payment?
+  returnRequest   ReturnRequest?
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+}
+
+model OrderItem {
+  id           String   @id @default(uuid())
+  orderId      String
+  order        Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  productId    String
+  product      Product  @relation(fields: [productId], references: [id])
+  variantLabel String   // e.g. "250g", "500g", "1kg"
+  quantityKg   Float    // e.g. 0.25, 0.5, 1.0
+  price        Float
+  itemTotal    Float
+}
+
+model Payment {
+  id            String    @id @default(uuid())
+  orderId       String    @unique
+  order         Order     @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  method        String    // UPI, CARD, NETBANKING, COD
+  status        String    @default("PENDING") // PENDING, PAID, FAILED, REFUNDED
+  transactionId String?
+  paidAt        DateTime?
+  createdAt     DateTime  @default(now())
+}
+
+model ReturnRequest {
+  id         String   @id @default(uuid())
+  orderId    String   @unique
+  order      Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  userId     String
+  user       User     @relation(fields: [userId], references: [id])
+  reason     String
+  status     String   @default("REQUESTED") // REQUESTED, APPROVED, REJECTED, REFUNDED
+  adminNotes String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
+
+model Coupon {
+  id              String   @id @default(uuid())
+  code            String   @unique
+  discountPercent Float
+  maxDiscount     Float
+  minOrderValue   Float
+  validUntil      DateTime
+  isActive        Boolean  @default(true)
+}
