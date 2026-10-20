@@ -6,6 +6,8 @@
   "scripts": {
     "start": "node server.js",
     "dev": "node --watch server.js",
+    "build": "prisma generate",
+    "postinstall": "prisma generate",
     "db:push": "prisma db push",
     "db:seed": "node prisma/seed.js",
     "prisma:generate": "prisma generate"
@@ -20,9 +22,7 @@
     "dotenv": "^16.4.7",
     "express": "^4.21.2",
     "jsonwebtoken": "^9.0.2",
-    "morgan": "^1.10.0"
-  },
-  "devDependencies": {
+    "morgan": "^1.10.0",
     "prisma": "^5.22.0"
   }
 }
